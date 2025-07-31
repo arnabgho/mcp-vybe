@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: mcp-vybe-python
+    runtime: python
+    buildCommand: "pip install -e ."
+    startCommand: "python server.py"
+    envVars:
+      - key: REPLICATE_API_TOKEN
+        sync: false
+      - key: MCP_TRANSPORT
+        value: http
+      - key: PORT
+        generateValue: true
+    healthCheckPath: /health
+    autoDeploy: true

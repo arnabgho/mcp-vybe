@@ -4,6 +4,7 @@ import os
 from typing import Optional
 from dotenv import load_dotenv
 import asyncio
+import base64
 
 load_dotenv()
 
@@ -16,6 +17,74 @@ mcp = FastMCP(
     "vybe-virtual-tryon",
     version="0.1.0"
 )
+
+# Add health check endpoint for Render
+@mcp.get("/health")
+async def health_check():
+    """Health check endpoint for Render monitoring."""
+    return {"status": "healthy", "service": "vybe-virtual-tryon"}
+
+@mcp.tool()
+async def base64_to_url(
+    base64_image: str,
+    image_type: Optional[str] = "png"
+) -> dict:
+    """
+    Convert a base64 encoded image to a data URI that can be used with Replicate.
+    
+    Args:
+        base64_image: Base64 encoded image string (with or without data:image prefix)
+        image_type: Image type (png, jpg, jpeg, gif, webp) - default: png
+    
+    Returns:
+        Dictionary with the data URI that can be used directly with virtual_tryon
+    """
+    try:
+        # Remove data:image prefix if present
+        if base64_image.startswith('data:image'):
+            # Already a data URI, just return it
+            return {
+                "success": True,
+                "url": base64_image,
+                "message": "Image is already a data URI"
+            }
+        
+        # Validate base64
+        try:
+            base64.b64decode(base64_image)
+        except:
+            return {
+                "success": False,
+                "error": "Invalid base64 string",
+                "message": "The provided string is not valid base64"
+            }
+        
+        # Determine MIME type
+        mime_types = {
+            'png': 'image/png',
+            'jpg': 'image/jpeg',
+            'jpeg': 'image/jpeg',
+            'gif': 'image/gif',
+            'webp': 'image/webp'
+        }
+        mime_type = mime_types.get(image_type.lower(), 'image/png')
+        
+        # Create a data URI that Replicate accepts
+        data_uri = f"data:{mime_type};base64,{base64_image}"
+        
+        return {
+            "success": True,
+            "url": data_uri,
+            "mime_type": mime_type,
+            "message": "Successfully created data URI. Use this 'url' with the virtual_tryon tool."
+        }
+            
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Failed to convert base64 to data URI"
+        }
 
 @mcp.tool()
 async def test_connection() -> dict:
@@ -137,15 +206,21 @@ async def virtual_tryon(
         }
 
 if __name__ == "__main__":
-    # If you need to configure HTTP timeout when running the server, 
-    # you can pass uvicorn_config to the run method
-    uvicorn_config = {
-        "timeout_keep_alive": 600,  # 10 minutes
-        "timeout_graceful_shutdown": 30,
-    }
+    # Configure for deployment
+    transport = os.getenv("MCP_TRANSPORT", "stdio")
+    port = int(os.getenv("PORT", "8000"))
     
-    # For stdio transport (default), timeout is handled by the client
-    mcp.run()
-    
-    # If you need to run with HTTP transport and specific timeout config:
-    # mcp.run(transport="http", uvicorn_config=uvicorn_config)
+    if transport == "http":
+        # HTTP transport for remote access (Render deployment)
+        uvicorn_config = {
+            "host": "0.0.0.0",
+            "port": port,
+            "timeout_keep_alive": 600,  # 10 minutes
+            "timeout_graceful_shutdown": 30,
+        }
+        print(f"Starting MCP server with HTTP transport on port {port}")
+        mcp.run(transport="http", uvicorn_config=uvicorn_config)
+    else:
+        # Default stdio transport for local use
+        print("Starting MCP server with stdio transport")
+        mcp.run()
