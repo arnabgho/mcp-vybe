@@ -87,6 +87,10 @@ If you still experience timeouts, you can adjust these in the server.py file.
 4. Add your `REPLICATE_API_TOKEN` in the Render dashboard under Environment Variables
 5. Deploy!
 
+The service includes health check endpoints:
+- `/health` - Health check endpoint for Render monitoring
+- `/` - Root endpoint with service status
+
 ### Manual Setup
 
 If you prefer manual configuration:
@@ -94,16 +98,22 @@ If you prefer manual configuration:
 1. Create a new Web Service on Render
 2. Connect your GitHub repository
 3. Configure the service:
-   - **Build Command**: `pip install -e .`
+   - **Build Command**: `pip install -r requirements.txt`
    - **Start Command**: `python server.py`
+   - **Health Check Path**: `/health`
 4. Add environment variables:
    - `REPLICATE_API_TOKEN`: Your Replicate API token (required)
-   - `MCP_TRANSPORT`: `http` (required for remote access)
    - `PORT`: (leave empty, Render will auto-assign)
+   - `HOST`: (leave empty, defaults to 0.0.0.0)
 
 ### Using the Remote MCP Server
 
-Once deployed, configure your MCP client to connect to the remote server:
+Once deployed, you can access the server at:
+- **Health Check**: `https://your-service-name.onrender.com/health`
+- **Root**: `https://your-service-name.onrender.com/`
+- **MCP Protocol**: Use the base URL for MCP client connections
+
+For MCP clients that support HTTP transport:
 
 ```json
 {
@@ -117,6 +127,45 @@ Once deployed, configure your MCP client to connect to the remote server:
 ```
 
 Replace `your-service-name` with your actual Render service URL.
+
+## Testing the Deployment
+
+Use the included test script to verify your deployment is working:
+
+```bash
+python test_deployment.py https://your-service-name.onrender.com
+```
+
+This will test:
+- Health check endpoint (`/health`)
+- Root endpoint (`/`)
+- Basic MCP server connectivity
+
+Example output:
+```
+Testing deployment at: https://your-service.onrender.com
+--------------------------------------------------
+
+🧪 Testing Health Endpoint...
+✅ Health check passed: {'status': 'healthy', 'service': 'vybe-virtual-tryon'}
+
+🧪 Testing Root Endpoint...
+✅ Root endpoint passed: {'message': 'Vybe Virtual Try-On MCP Server', 'status': 'running'}
+
+🧪 Testing MCP Connection...
+✅ MCP server is responding
+
+==================================================
+TEST RESULTS:
+==================================================
+✅ PASS - Health Endpoint
+✅ PASS - Root Endpoint
+✅ PASS - MCP Connection
+
+Tests passed: 3/3
+
+🎉 All tests passed! Deployment is working correctly.
+```
 
 ### Docker Deployment (Alternative)
 

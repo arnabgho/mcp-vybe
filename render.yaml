@@ -1,15 +1,19 @@
 services:
   - type: web
-    name: mcp-vybe-python
-    runtime: python
-    buildCommand: "pip install -e ."
-    startCommand: "python server.py"
+    name: vybe-virtual-tryon
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python server.py
     envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
       - key: REPLICATE_API_TOKEN
-        sync: false
-      - key: MCP_TRANSPORT
-        value: http
-      - key: PORT
-        generateValue: true
-    healthCheckPath: /health
-    autoDeploy: true
+        sync: false  # This will need to be set manually in Render dashboard
+    healthCheckPath: /
+    numInstances: 1
+    plan: starter  # Change to 'standard' or higher for production
+    region: oregon  # Choose your preferred region
+    disk:
+      name: data
+      mountPath: /data
+      sizeGB: 1

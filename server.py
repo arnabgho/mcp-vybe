@@ -18,12 +18,6 @@ mcp = FastMCP(
     version="0.1.0"
 )
 
-# Add health check endpoint for Render
-@mcp.get("/health")
-async def health_check():
-    """Health check endpoint for Render monitoring."""
-    return {"status": "healthy", "service": "vybe-virtual-tryon"}
-
 @mcp.tool()
 async def base64_to_url(
     base64_image: str,
@@ -205,22 +199,40 @@ async def virtual_tryon(
             "message": "Failed to generate virtual try-on"
         }
 
-if __name__ == "__main__":
-    # Configure for deployment
-    transport = os.getenv("MCP_TRANSPORT", "stdio")
-    port = int(os.getenv("PORT", "8000"))
+@mcp.custom_route("/health", ["GET"])
+async def health_check(request):
+    """Health check endpoint for Render"""
+    from fastapi import Response
+    return Response(
+        content='{"status": "healthy", "service": "vybe-virtual-tryon"}',
+        media_type="application/json",
+        status_code=200
+    )
+
+@mcp.custom_route("/", ["GET"])
+async def root(request):
+    """Root endpoint"""
+    from fastapi import Response
+    return Response(
+        content='{"message": "Vybe Virtual Try-On MCP Server", "status": "running"}',
+        media_type="application/json",
+        status_code=200
+    )
+
+async def main():
+    # Get port from environment (Render sets PORT env var)
+    port = int(os.getenv("PORT", 8000))
+    host = os.getenv("HOST", "0.0.0.0")
     
-    if transport == "http":
-        # HTTP transport for remote access (Render deployment)
-        uvicorn_config = {
-            "host": "0.0.0.0",
-            "port": port,
-            "timeout_keep_alive": 600,  # 10 minutes
-            "timeout_graceful_shutdown": 30,
-        }
-        print(f"Starting MCP server with HTTP transport on port {port}")
-        mcp.run(transport="http", uvicorn_config=uvicorn_config)
-    else:
-        # Default stdio transport for local use
-        print("Starting MCP server with stdio transport")
-        mcp.run()
+    print(f"Starting server on {host}:{port}")
+    
+    # Use run_async() with Render-compatible settings
+    await mcp.run_async(
+        transport="http",
+        host=host,
+        port=port,
+        log_level="info"
+    )
+
+if __name__ == "__main__":
+    asyncio.run(main())

@@ -1,3 +1,5 @@
 fastmcp
 replicate
 python-dotenv
+uvicorn
+httpx
