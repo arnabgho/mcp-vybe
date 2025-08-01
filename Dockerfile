@@ -7,13 +7,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certifi
 
 WORKDIR /app
 
-# Copy project files for uv sync
-COPY pyproject.toml uv.lock ./
+# Copy requirements.txt (generated from pyproject.toml)
+COPY requirements.txt ./
 
-# Install dependencies using uv sync
-RUN uv sync --frozen --no-dev
+# Install requirements using uv pip install
+RUN uv pip install --system -r requirements.txt
 
 COPY . .
 
 EXPOSE 8000
-CMD ["uv", "run", "python", "server.py"]
+CMD ["python", "server.py"]
