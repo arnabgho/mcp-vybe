@@ -1,13 +1,15 @@
 [project]
-name = "mcp-vybe-python"
+name = "vybe-virtual-tryon"
 version = "0.1.0"
 description = "FastMCP server for Vybe Virtual Try-On using Replicate API"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.11"
 dependencies = [
     "fastmcp",
     "replicate",
     "python-dotenv",
+    "uvicorn",
+    "httpx",
 ]
 
 [project.optional-dependencies]

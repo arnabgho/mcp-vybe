@@ -6,12 +6,23 @@ A FastMCP server that wraps the Replicate API for virtual try-on functionality, 
 
 ### Using UV (recommended)
 
-1. Install dependencies:
+1. Install uv if you haven't already:
 ```bash
-uv pip install -e .
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-### Using pip
+2. Install dependencies:
+```bash
+uv sync
+```
+
+3. Set up environment variables:
+```bash
+cp .env.example .env
+```
+Edit `.env` and add your Replicate API token.
+
+### Using pip (alternative)
 
 1. Install dependencies:
 ```bash
@@ -28,6 +39,10 @@ Edit `.env` and add your Replicate API token.
 
 Run the server locally:
 ```bash
+# With uv (recommended)
+uv run python server.py
+
+# Or with regular python
 python server.py
 ```
 
@@ -98,8 +113,8 @@ If you prefer manual configuration:
 1. Create a new Web Service on Render
 2. Connect your GitHub repository
 3. Configure the service:
-   - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `python server.py`
+   - **Build Command**: `curl -LsSf https://astral.sh/uv/install.sh | sh && source $HOME/.cargo/env && uv sync --frozen --no-dev`
+   - **Start Command**: `uv run python server.py`
    - **Health Check Path**: `/health`
 4. Add environment variables:
    - `REPLICATE_API_TOKEN`: Your Replicate API token (required)
@@ -133,6 +148,10 @@ Replace `your-service-name` with your actual Render service URL.
 Use the included test script to verify your deployment is working:
 
 ```bash
+# With uv (if using uv environment)
+uv run python test_deployment.py https://your-service-name.onrender.com
+
+# Or with regular python
 python test_deployment.py https://your-service-name.onrender.com
 ```
 

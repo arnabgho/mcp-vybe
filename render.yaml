@@ -2,14 +2,14 @@ services:
   - type: web
     name: vybe-virtual-tryon
     env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: python server.py
+    buildCommand: curl -LsSf https://astral.sh/uv/install.sh | sh && source $HOME/.cargo/env && uv sync --frozen --no-dev
+    startCommand: uv run python server.py
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
       - key: REPLICATE_API_TOKEN
         sync: false  # This will need to be set manually in Render dashboard
-    healthCheckPath: /
+    healthCheckPath: /health
     numInstances: 1
     plan: starter  # Change to 'standard' or higher for production
     region: oregon  # Choose your preferred region
