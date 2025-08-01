@@ -18,9 +18,10 @@ dev = [
     "pytest-asyncio",
 ]
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+# Remove build-system since this is a standalone script, not a package
+# [build-system]
+# requires = ["hatchling"]
+# build-backend = "hatchling.build"
 
 [tool.uv]
 dev-dependencies = [
