@@ -1,0 +1,310 @@
+{
+  "name": "vybe-virtual-tryon",
+  "version": "0.1.0",
+  "description": "MCP server for AI-powered virtual clothing try-on using Replicate. Allows you to virtually try on clothing items on model images.",
+  "author": {
+    "name": "Vybe Team",
+    "email": "support@vybe.ai"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/yourusername/mcp-vybe-python",
+  "homepage": "https://github.com/yourusername/mcp-vybe-python#readme",
+  "keywords": [
+    "mcp",
+    "virtual-tryon",
+    "fashion",
+    "ai",
+    "replicate",
+    "clothing",
+    "e-commerce"
+  ],
+  "transport": {
+    "supported": ["http", "sse"],
+    "preferred": "http"
+  },
+  "environment": {
+    "required": [
+      {
+        "name": "REPLICATE_API_TOKEN",
+        "description": "API token for Replicate service",
+        "secret": true
+      }
+    ],
+    "optional": [
+      {
+        "name": "ENABLE_OAUTH",
+        "description": "Enable OAuth 2.0 authentication (true/false)",
+        "default": "false"
+      },
+      {
+        "name": "JWT_SECRET_KEY",
+        "description": "Secret key for JWT token signing (required if ENABLE_OAUTH=true)",
+        "secret": true
+      },
+      {
+        "name": "GOOGLE_CLIENT_ID",
+        "description": "Google OAuth client ID",
+        "secret": false
+      },
+      {
+        "name": "GOOGLE_CLIENT_SECRET",
+        "description": "Google OAuth client secret",
+        "secret": true
+      },
+      {
+        "name": "GITHUB_CLIENT_ID",
+        "description": "GitHub OAuth client ID",
+        "secret": false
+      },
+      {
+        "name": "GITHUB_CLIENT_SECRET",
+        "description": "GitHub OAuth client secret",
+        "secret": true
+      },
+      {
+        "name": "OAUTH_REDIRECT_BASE_URL",
+        "description": "Base URL for OAuth redirects",
+        "default": "http://localhost:8000"
+      },
+      {
+        "name": "ENABLE_API_KEY_AUTH",
+        "description": "Enable API key authentication as fallback (true/false)",
+        "default": "false"
+      },
+      {
+        "name": "MCP_API_KEY",
+        "description": "API key for MCP server authentication (required if ENABLE_API_KEY_AUTH=true)",
+        "secret": true
+      },
+      {
+        "name": "PORT",
+        "description": "Server port",
+        "default": "8000"
+      },
+      {
+        "name": "HOST",
+        "description": "Server host",
+        "default": "0.0.0.0"
+      },
+      {
+        "name": "REPLICATE_POLL_INTERVAL",
+        "description": "Polling interval for Replicate jobs (seconds)",
+        "default": "5"
+      },
+      {
+        "name": "REPLICATE_TIMEOUT",
+        "description": "Timeout for Replicate operations (seconds)",
+        "default": "600"
+      }
+    ]
+  },
+  "tools": [
+    {
+      "name": "test_connection",
+      "description": "Test the connection to Replicate API and check server configuration",
+      "parameters": [],
+      "returns": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "message": { "type": "string" },
+          "replicate_token_set": { "type": "boolean" },
+          "authentication": { "type": "object" },
+          "timeout_settings": { "type": "object" }
+        }
+      }
+    },
+    {
+      "name": "base64_to_url",
+      "description": "Convert base64 encoded images to data URIs for use with virtual try-on",
+      "parameters": [
+        {
+          "name": "base64_image",
+          "type": "string",
+          "required": true,
+          "description": "Base64 encoded image string"
+        },
+        {
+          "name": "image_type",
+          "type": "string",
+          "required": false,
+          "default": "png",
+          "description": "Image type (png, jpg, jpeg, gif, webp)"
+        }
+      ],
+      "returns": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "url": { "type": "string" },
+          "mime_type": { "type": "string" },
+          "message": { "type": "string" }
+        }
+      }
+    },
+    {
+      "name": "virtual_tryon",
+      "description": "Apply virtual clothing try-on to a model image",
+      "parameters": [
+        {
+          "name": "model_image",
+          "type": "string",
+          "required": true,
+          "description": "URL or data URI of the person/model image"
+        },
+        {
+          "name": "garment_image",
+          "type": "string",
+          "required": true,
+          "description": "URL or data URI of the clothing item to try on"
+        },
+        {
+          "name": "seed",
+          "type": "integer",
+          "required": false,
+          "default": 42,
+          "description": "Random seed for reproducibility"
+        },
+        {
+          "name": "prompt",
+          "type": "string",
+          "required": false,
+          "description": "Custom prompt for generation"
+        },
+        {
+          "name": "size_width",
+          "type": "integer",
+          "required": false,
+          "default": 672,
+          "description": "Output image width"
+        },
+        {
+          "name": "size_height",
+          "type": "integer",
+          "required": false,
+          "default": 896,
+          "description": "Output image height"
+        },
+        {
+          "name": "make_square",
+          "type": "boolean",
+          "required": false,
+          "default": true,
+          "description": "Whether to make output square"
+        },
+        {
+          "name": "whiten_mask",
+          "type": "boolean",
+          "required": false,
+          "default": false,
+          "description": "Whether to whiten the mask"
+        },
+        {
+          "name": "expand_ratio",
+          "type": "number",
+          "required": false,
+          "default": 0.025,
+          "description": "Mask expansion ratio"
+        },
+        {
+          "name": "output_format",
+          "type": "string",
+          "required": false,
+          "default": "png",
+          "description": "Output format (png or jpg)"
+        },
+        {
+          "name": "guidance_scale",
+          "type": "integer",
+          "required": false,
+          "default": 30,
+          "description": "Guidance scale for generation"
+        },
+        {
+          "name": "output_quality",
+          "type": "integer",
+          "required": false,
+          "default": 90,
+          "description": "Output quality (1-100)"
+        },
+        {
+          "name": "num_inference_steps",
+          "type": "integer",
+          "required": false,
+          "default": 30,
+          "description": "Number of inference steps"
+        }
+      ],
+      "returns": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "results": { "type": "array", "items": { "type": "string" } },
+          "model": { "type": "string" },
+          "parameters": { "type": "object" }
+        }
+      }
+    }
+  ],
+  "endpoints": {
+    "health": {
+      "path": "/health",
+      "method": "GET",
+      "description": "Health check endpoint"
+    },
+    "root": {
+      "path": "/",
+      "method": "GET",
+      "description": "Root endpoint with service information"
+    }
+  },
+  "deployment": {
+    "platforms": ["render", "docker", "heroku", "aws", "gcp"],
+    "requirements": {
+      "python": ">=3.11",
+      "framework": "fastmcp"
+    },
+    "recommended": {
+      "memory": "512MB",
+      "cpu": "0.5",
+      "timeout": "600s"
+    }
+  },
+  "security": {
+    "authentication": {
+      "types": ["oauth2", "api_key"],
+      "oauth2": {
+        "providers": ["google", "github"],
+        "endpoints": {
+          "login": "/auth/login/{provider}",
+          "callback": "/auth/callback/{provider}",
+          "logout": "/auth/logout",
+          "providers_list": "/auth/providers"
+        },
+        "token_type": "JWT",
+        "description": "OAuth 2.0 authentication with JWT tokens"
+      },
+      "api_key": {
+        "optional": true,
+        "headers": ["Authorization", "X-API-Key"],
+        "description": "API key authentication as fallback option"
+      },
+      "configuration": {
+        "oauth_enabled": "ENABLE_OAUTH",
+        "api_key_enabled": "ENABLE_API_KEY_AUTH"
+      }
+    },
+    "https": {
+      "required": true,
+      "description": "HTTPS is required for production deployments, especially with OAuth"
+    }
+  },
+  "monitoring": {
+    "healthcheck": "/health",
+    "metrics": false,
+    "logging": {
+      "level": "info",
+      "format": "json"
+    }
+  }
+}

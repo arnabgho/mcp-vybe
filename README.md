@@ -83,6 +83,71 @@ Performs virtual try-on with these parameters:
 - `garment_image`: URL or data URI of the clothing item to try on
 - Various optional parameters for customization
 
+## Authentication
+
+The server supports two authentication methods that can be used independently or together:
+
+### OAuth 2.0 Authentication
+
+Enable OAuth by setting `ENABLE_OAUTH=true` in your `.env` file. The server supports:
+- **Google OAuth**: For Google account authentication
+- **GitHub OAuth**: For GitHub account authentication
+
+#### Setting up OAuth Providers
+
+1. **Google OAuth**:
+   - Go to [Google Cloud Console](https://console.cloud.google.com/)
+   - Create a new project or select existing
+   - Enable Google+ API
+   - Create OAuth 2.0 credentials
+   - Add authorized redirect URI: `http://localhost:8000/auth/callback/google`
+   - Copy Client ID and Client Secret to `.env`
+
+2. **GitHub OAuth**:
+   - Go to [GitHub Developer Settings](https://github.com/settings/developers)
+   - Create a new OAuth App
+   - Set Authorization callback URL: `http://localhost:8000/auth/callback/github`
+   - Copy Client ID and Client Secret to `.env`
+
+#### OAuth Endpoints
+
+- `/auth/providers` - List available OAuth providers
+- `/auth/login/{provider}` - Initiate OAuth login flow
+- `/auth/callback/{provider}` - OAuth callback (handled automatically)
+- `/auth/logout` - Logout endpoint
+
+#### Using OAuth with MCP
+
+After OAuth login, you'll receive a JWT token. Use it in requests:
+
+```bash
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" https://your-server/
+```
+
+### API Key Authentication
+
+Enable API key authentication by setting `ENABLE_API_KEY_AUTH=true` in your `.env` file.
+
+Generate a secure API key:
+```bash
+openssl rand -hex 32
+```
+
+Use the API key in requests:
+```bash
+# Using Authorization header
+curl -H "Authorization: Bearer YOUR_API_KEY" https://your-server/
+
+# Using X-API-Key header
+curl -H "X-API-Key: YOUR_API_KEY" https://your-server/
+```
+
+### Combining Authentication Methods
+
+You can enable both OAuth and API key authentication. This allows:
+- Users to authenticate via OAuth for web interfaces
+- Systems to use API keys for programmatic access
+
 ## Timeout Configuration
 
 The server is configured with extended timeouts to handle long-running Replicate operations:
@@ -120,6 +185,17 @@ If you prefer manual configuration:
    - `REPLICATE_API_TOKEN`: Your Replicate API token (required)
    - `PORT`: (leave empty, Render will auto-assign)
    - `HOST`: (leave empty, defaults to 0.0.0.0)
+   
+   For OAuth authentication (optional):
+   - `ENABLE_OAUTH`: Set to `true` to enable OAuth
+   - `JWT_SECRET_KEY`: Secret key for JWT tokens (generate with `openssl rand -hex 32`)
+   - `OAUTH_REDIRECT_BASE_URL`: Your deployment URL (e.g., `https://your-service.onrender.com`)
+   - `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`: For Google OAuth
+   - `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`: For GitHub OAuth
+   
+   For API key authentication (optional):
+   - `ENABLE_API_KEY_AUTH`: Set to `true` to enable API key auth
+   - `MCP_API_KEY`: Your secure API key
 
 ### Using the Remote MCP Server
 

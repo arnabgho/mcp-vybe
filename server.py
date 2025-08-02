@@ -1,12 +1,19 @@
 from fastmcp import FastMCP
 import replicate
 import os
-from typing import Optional
+from typing import Optional, Dict, Any
 from dotenv import load_dotenv
 import asyncio
 import base64
+from fastapi import HTTPException, Request, Depends
+from starlette.middleware.sessions import SessionMiddleware
+import logging
 
 load_dotenv()
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Set Replicate client timeout
 os.environ["REPLICATE_POLL_INTERVAL"] = "5"  # Poll every 5 seconds
@@ -17,6 +24,63 @@ mcp = FastMCP(
     "vybe-virtual-tryon",
     version="0.1.0"
 )
+
+# Import authentication modules
+from auth import verify_auth, create_oauth_routes, ENABLE_OAUTH, ENABLE_API_KEY_AUTH
+from jwt_utils import create_access_token, verify_token
+
+def get_available_providers():
+    """Get list of configured OAuth providers."""
+    providers = []
+    if ENABLE_OAUTH:
+        if os.getenv("GOOGLE_CLIENT_ID"):
+            providers.append("google")
+        if os.getenv("GITHUB_CLIENT_ID"):
+            providers.append("github")
+    return providers
+
+# Add session middleware for OAuth (required for authorization flow)
+SESSION_SECRET_KEY = os.getenv("SESSION_SECRET_KEY", os.getenv("JWT_SECRET_KEY", "change-this-secret-key"))
+
+# We'll add the session middleware when the app is created
+@mcp.on_startup()
+async def startup():
+    """Configure the application on startup."""
+    # Get the underlying Starlette/FastAPI app
+    app = mcp._app
+    
+    # Add session middleware
+    app.add_middleware(
+        SessionMiddleware,
+        secret_key=SESSION_SECRET_KEY,
+        https_only=os.getenv("HTTPS_ONLY", "false").lower() == "true"
+    )
+    
+    # Create OAuth routes
+    create_oauth_routes(app)
+    
+    logger.info(f"OAuth enabled: {ENABLE_OAUTH}")
+    logger.info(f"API Key auth enabled: {ENABLE_API_KEY_AUTH}")
+
+# Apply authentication middleware if any auth method is enabled
+if ENABLE_OAUTH or ENABLE_API_KEY_AUTH:
+    @mcp.middleware()
+    async def auth_middleware(request: Request, call_next):
+        # Skip authentication for specific endpoints
+        skip_paths = ["/health", "/", "/auth/login", "/auth/callback", "/auth/providers", "/auth/logout"]
+        if any(request.url.path.startswith(path) for path in skip_paths):
+            return await call_next(request)
+        
+        try:
+            # Verify authentication
+            user_info = await verify_auth(request, credentials=None)
+            # Add user info to request state for use in tools
+            request.state.user = user_info
+        except HTTPException:
+            # Let verify_auth handle the error response
+            raise
+        
+        return await call_next(request)
 
 @mcp.tool()
 async def base64_to_url(
@@ -91,6 +155,11 @@ async def test_connection() -> dict:
             "success": True,
             "message": "Connection test successful",
             "replicate_token_set": bool(os.getenv("REPLICATE_API_TOKEN")),
+            "authentication": {
+                "oauth_enabled": ENABLE_OAUTH,
+                "api_key_enabled": ENABLE_API_KEY_AUTH,
+                "providers": get_available_providers()
+            },
             "timeout_settings": {
                 "replicate_timeout": os.getenv("REPLICATE_TIMEOUT", "Not set"),
                 "replicate_poll_interval": os.getenv("REPLICATE_POLL_INTERVAL", "Not set")
