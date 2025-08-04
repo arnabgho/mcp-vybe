@@ -5,7 +5,7 @@ description = "FastMCP server for Vybe Virtual Try-On using Replicate API"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "fastmcp",
+    "fastmcp==2.11.0",
     "replicate",
     "python-dotenv",
     "uvicorn",
