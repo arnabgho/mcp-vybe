@@ -234,7 +234,7 @@ async def main():
     port = int(os.getenv("PORT", 8000))
     host = os.getenv("HOST", "0.0.0.0")
     
-    print(f"Starting server on {host}:{port}")
+    # print(f"Starting server on {host}:{port}")
     
     # Use run_async() with Render-compatible settings
     await mcp.run_async(
