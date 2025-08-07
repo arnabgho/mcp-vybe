@@ -1,4 +1,5 @@
 from fastmcp import FastMCP
+from fastmcp.server.auth.providers.workos import AuthKitProvider
 import replicate
 import os
 from typing import Optional
@@ -12,10 +13,19 @@ load_dotenv()
 os.environ["REPLICATE_POLL_INTERVAL"] = "5"  # Poll every 5 seconds
 os.environ["REPLICATE_TIMEOUT"] = "600"  # 10 minute timeout
 
+# Configure AuthKit authentication if enabled
+auth_provider = None
+if os.getenv("AUTHKIT_DOMAIN"):
+    auth_provider = AuthKitProvider(
+        authkit_domain=os.getenv("AUTHKIT_DOMAIN"),
+        base_url=os.getenv("BASE_URL", "http://localhost:8000")
+    )
+
 # Remove the request_timeout parameter from FastMCP constructor
 mcp = FastMCP(
     "vybe-virtual-tryon",
-    version="0.1.0"
+    version="0.1.0",
+    auth=auth_provider
 )
 
 @mcp.tool()
@@ -224,7 +234,7 @@ async def main():
     port = int(os.getenv("PORT", 8000))
     host = os.getenv("HOST", "0.0.0.0")
     
-    print(f"Starting server on {host}:{port}")
+    # print(f"Starting server on {host}:{port}")
     
     # Use run_async() with Render-compatible settings
     await mcp.run_async(
