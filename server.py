@@ -2,10 +2,11 @@ from fastmcp import FastMCP
 from fastmcp.server.auth.providers.workos import AuthKitProvider
 import replicate
 import os
-from typing import Optional
+from typing import Optional, List
 from dotenv import load_dotenv
 import asyncio
 import base64
+from tavily import TavilyClient
 
 load_dotenv()
 
@@ -207,6 +208,79 @@ async def virtual_tryon(
             "success": False,
             "error": str(e),
             "message": "Failed to generate virtual try-on"
+        }
+
+@mcp.tool()
+async def style_recommendation_today(
+    search_keyword: str,
+    max_results: Optional[int] = 1
+) -> dict:
+    """
+    Get style recommendations based on a search keyword and try them on the user.
+    
+    Args:
+        search_keyword: Style or clothing search term (e.g., "summer dress", "business casual")
+        max_results: Maximum number of clothing items to try on (default: 3)
+    
+    Returns:
+        Dictionary with clothing images for try-on
+    """
+    try:
+        # Check for Tavily API key
+        tavily_api_key = os.getenv("TAVILY_API_KEY")
+        if not tavily_api_key:
+            return {
+                "success": False,
+                "error": "TAVILY_API_KEY not configured",
+                "message": "Please set TAVILY_API_KEY in your environment variables"
+            }
+        
+        # Initialize Tavily client
+        tavily_client = TavilyClient(api_key=tavily_api_key)
+        
+        # Search for clothing items
+        search_query = f"{search_keyword}"
+        search_results = tavily_client.search(
+            query=search_query,
+            # search_depth="basic",
+            include_images=True,
+            # max_results=max_results * 2  # Get more results to filter from
+        )
+        
+        # Extract image URLs from search results
+        clothing_images = []
+        
+        if 'images' in search_results:
+            for img_url in search_results['images']:
+                if img_url and len(clothing_images) < max_results:
+                    clothing_images.append({
+                        'url': img_url,
+                        'source': search_results.get('url', 'Unknown'),
+                        'title': search_results.get('title', 'Untitled')
+                    })
+            
+        
+        if not clothing_images:
+            return {
+                "success": False,
+                "search_results": search_results,
+                "error": "No clothing images found",
+                "message": f"Could not find clothing images for '{search_keyword}'"
+            }
+        
+        
+        return {
+            "success": True,
+            # "search_keyword": search_keyword,
+            # "search_results": search_results,
+            "clothing_images": clothing_images
+        }
+        
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Failed to get style recommendations"
         }
 
 @mcp.custom_route("/health", ["GET"])

@@ -11,6 +11,7 @@ dependencies = [
     "python-dotenv",
     "uvicorn",
     "httpx",
+    "tavily-python",
 ]
 
 [project.optional-dependencies]

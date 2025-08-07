@@ -10,7 +10,7 @@ uv pip install -r requirements.txt
 
 # Configure environment
 cp .env.example .env
-# Edit .env with your REPLICATE_API_TOKEN
+# Edit .env with your REPLICATE_API_TOKEN and TAVILY_API_KEY (optional)
 
 # Run server
 uv run python server.py
@@ -35,9 +35,15 @@ When enabled, all API calls require authentication through AuthKit.
 ## Available Tools
 
 - **virtual_tryon**: AI-powered clothing try-on
-  - `human_image`: Person image (URL or base64)
-  - `cloth_image`: Clothing image (URL or base64)
-  - `cloth_type`: upper/lower/overall
+  - `model_image`: Person image (URL or base64)
+  - `garment_image`: Clothing image (URL or base64)
+  - Additional parameters: seed, prompt, size_width, size_height, etc.
+
+- **style_recommendation_today**: Get clothing recommendations and try them on
+  - `user_image`: Your photo (URL or base64)
+  - `search_keyword`: Style search term (e.g., "summer dress", "business casual")
+  - `max_results`: Number of items to try (default: 3)
+  - Requires `TAVILY_API_KEY` in environment
 
 - **base64_to_url**: Convert base64 to data URI
 - **test_connection**: Test Replicate connection
@@ -48,6 +54,7 @@ When enabled, all API calls require authentication through AuthKit.
 1. Connect GitHub repository
 2. Add environment variables:
    - `REPLICATE_API_TOKEN` (required)
+   - `TAVILY_API_KEY` (required for style_recommendation_today)
    - `AUTHKIT_DOMAIN` (optional)
    - `BASE_URL` (if using AuthKit)
 3. Deploy

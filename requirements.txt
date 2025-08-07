@@ -195,3 +195,5 @@ uvicorn==0.35.0
     #   vybe-virtual-tryon
 werkzeug==3.1.1
     # via openapi-core
+tavily-python==0.5.0
+    # via vybe-virtual-tryon
